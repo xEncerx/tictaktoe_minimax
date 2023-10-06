@@ -1,10 +1,12 @@
 from tkinter.messagebox import showinfo
 import tkinter as tk
+from typing import Union
 
 class Theme:
     button_bg = "#ebf1f1"
     button_fg = "#34495e"
     main_bg = "#14212a"
+    winner_bg = "#44cc77"
 
 
 class TicTacToe:
@@ -15,6 +17,7 @@ class TicTacToe:
         self.buttons = [[None, None, None],
                         [None, None, None],
                         [None, None, None]]
+
         self.board = [["", "", ""],
                       ["", "", ""],
                       ["", "", ""]]
@@ -24,7 +27,7 @@ class TicTacToe:
 
     def _initialize(self) -> None:
         self._restart_img = tk.PhotoImage(file="./images/restart.png")
-        self.window.iconbitmap(r"./images/icon.ico")
+        self.window.iconbitmap("./images/icon.ico")
         self.window.title("Tic-Tac-Toe")
         self.window.geometry("318x400")
         self.window.configure(bg=self.theme.main_bg)
@@ -41,7 +44,12 @@ class TicTacToe:
         self._restart_button.grid(row=3, column=1, pady=10)
 
     def _check_game_status(self) -> None:
-        if self._check_winner():
+        if coord := self._check_winner():
+            self._disable_buttons()
+
+            for x, y in coord:
+                self.buttons[x][y].config(bg=self.theme.winner_bg)
+
             showinfo("Game Over", f"Player {self.current_player} wins!")
 
         elif self._check_draw():
@@ -60,16 +68,19 @@ class TicTacToe:
             if self.current_player == "O":
                 self._ai_move()
 
-    def _check_winner(self) -> bool:
+    def _check_winner(self) -> Union[bool, list]:
         for i in range(3):
             if self.board[i][0] == self.board[i][1] == self.board[i][2] != "":
-                return True
+                return [(i, 0), (i, 1), (i, 2)]
+
             if self.board[0][i] == self.board[1][i] == self.board[2][i] != "":
-                return True
+                return [(0, i), (1, i), (2, i)]
+
         if self.board[0][0] == self.board[1][1] == self.board[2][2] != "":
-            return True
+            return [(0, 0), (1, 1), (2, 2)]
+
         if self.board[0][2] == self.board[1][1] == self.board[2][0] != "":
-            return True
+            return [(0, 2), (1, 1), (2, 0)]
         return False
 
     def _check_draw(self) -> bool:
@@ -79,11 +90,16 @@ class TicTacToe:
                     return False
         return True
 
+    def _disable_buttons(self) -> None:
+        for x in range(3):
+            for y in range(3):
+                self.buttons[x][y].config(state=tk.DISABLED)
+
     def _restart_game(self) -> None:
         for x in range(3):
             for y in range(3):
                 self.board[x][y] = ""
-                self.buttons[x][y].config(text="", state=tk.NORMAL)
+                self.buttons[x][y].config(text="", state=tk.NORMAL, bg=self.theme.button_bg)
         self.current_player = "X"
 
     def _minimax(self, is_maximizing: bool) -> int:
@@ -123,7 +139,7 @@ class TicTacToe:
 
         self._check_game_status()
 
-    def run(self):
+    def run(self) -> None:
         self.window.mainloop()
 
 
