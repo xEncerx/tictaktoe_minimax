@@ -1,6 +1,7 @@
 from tkinter.messagebox import showinfo
 import tkinter as tk
 from typing import Union
+from os.path import exists
 
 class Theme:
     button_bg = "#ebf1f1"
@@ -10,7 +11,10 @@ class Theme:
 
 
 class TicTacToe:
-    def __init__(self):
+    _difficulty_factor = {"easy": 1, "medium": 3, "hard": 5}  # На сколько ходов вперед алгоритм минимакс может анализировать ситуацию на доске. Чем больше значение, тем меньше шанс выиграть
+    theme = Theme()
+
+    def __init__(self, difficulty: str = "medium"):
         self.window = tk.Tk()
 
         self.current_player = "X"
@@ -21,11 +25,20 @@ class TicTacToe:
         self.board = [["", "", ""],
                       ["", "", ""],
                       ["", "", ""]]
-        self.theme = Theme()
+
+        if (input_diff := difficulty.lower()) in (keys := self._difficulty_factor.keys()):
+            self.difficulty = self._difficulty_factor[input_diff]
+        else:
+            raise ValueError(f"Неверный уровень сложности. Допустимые значение: {', '.join(keys)}")
 
         self._initialize()
 
     def _initialize(self) -> None:
+        if not exists("./images/restart.png"):
+            raise FileExistsError("Файл restart.png не найден!")
+        if not exists("./images/icon.ico"):
+            raise FileExistsError("Файл icon.ico не найден!")
+        
         self._restart_img = tk.PhotoImage(file="./images/restart.png")
         self.window.iconbitmap("./images/icon.ico")
         self.window.title("Tic-Tac-Toe")
@@ -102,10 +115,10 @@ class TicTacToe:
                 self.buttons[x][y].config(text="", state=tk.NORMAL, bg=self.theme.button_bg)
         self.current_player = "X"
 
-    def _minimax(self, is_maximizing: bool) -> int:
+    def _minimax(self, depth: int, is_maximizing: bool) -> int:
         if self._check_winner():
             return -1 if is_maximizing else 1
-        if self._check_draw():
+        if self._check_draw() or depth == 0:
             return 0
 
         best_score = float("-inf" if is_maximizing else "inf")
@@ -115,7 +128,7 @@ class TicTacToe:
             for y in range(3):
                 if self.board[x][y] == "":
                     self.board[x][y] = player
-                    score = self._minimax(not is_maximizing)
+                    score = self._minimax(depth-1, not is_maximizing)
                     self.board[x][y] = ""
                     best_score = max(score, best_score) if is_maximizing else min(score, best_score)
 
@@ -128,7 +141,7 @@ class TicTacToe:
             for y in range(3):
                 if self.board[x][y] == "":
                     self.board[x][y] = "O"
-                    score = self._minimax(False)
+                    score = self._minimax(self.difficulty, False)
                     self.board[x][y] = ""
                     if score > best_score:
                         best_score = score
@@ -144,5 +157,5 @@ class TicTacToe:
 
 
 if __name__ == "__main__":
-    game = TicTacToe()
+    game = TicTacToe("medium")
     game.run()
